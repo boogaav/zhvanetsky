@@ -1,0 +1,13 @@
+{
+  "name": "zhvanetsky",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "postCreateCommand": "npm install",
+  "postAttachCommand": "npm run dev",
+  "forwardPorts": [5195],
+  "portsAttributes": {
+    "5195": {
+      "label": "Zhvanetsky app",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}

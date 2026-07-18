@@ -1,26 +1,66 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-paper: #f7f3ea;
+  --color-paper-deep: #efe9dc;
+  --color-ink: #262420;
+  --color-ink-soft: #5c574b;
+  --color-ink-faint: #8f8878;
+  --color-accent: #8a3733;
+  --color-accent-deep: #6f2c29;
+  --color-line: #ddd5c4;
+
+  --font-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-sans: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-paper);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* faint paper grain via layered radial dots; deliberately no gradients */
+  background-color: var(--color-paper);
+  background-image: radial-gradient(
+      rgba(38, 36, 32, 0.025) 1px,
+      transparent 1px
+    ),
+    radial-gradient(rgba(38, 36, 32, 0.015) 1px, transparent 1px);
+  background-size: 11px 11px, 7px 7px;
+  background-position: 0 0, 4px 3px;
+}
+
+::selection {
+  background: rgba(138, 55, 51, 0.18);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* quiet pulsing dot for the loading stage indicator */
+@keyframes quiet-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.stage-dot {
+  animation: quiet-pulse 1.6s ease-in-out infinite;
 }
