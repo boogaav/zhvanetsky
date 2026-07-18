@@ -9,8 +9,8 @@ The product name is centralized in [lib/config.ts](lib/config.ts) (`APP_NAME`, o
 
 ## Try it in one click
 
-- **GitHub Codespaces**: [open a codespace](https://codespaces.new/cryptofriend/zhvanetsky?quickstart=1) — it installs dependencies and starts the app on port 5195 automatically (demo mode, no API key needed).
-- **Vercel**: [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fcryptofriend%2Fzhvanetsky&env=AI_PROVIDER&envDescription=Set%20AI_PROVIDER%3Ddemo%20to%20try%20without%20an%20OpenAI%20key%2C%20or%20openai%20with%20OPENAI_API_KEY%20and%20OPENAI_MODEL) — deploys a permanent URL; set `AI_PROVIDER=demo` to run without a key.
+- **GitHub Codespaces**: [open a codespace](https://codespaces.new/boogaav/zhvanetsky?quickstart=1) — it installs dependencies and starts the app on port 5195 automatically (demo mode, no API key needed).
+- **Vercel**: [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fboogaav%2Fzhvanetsky&env=AI_PROVIDER&envDescription=Set%20AI_PROVIDER%3Ddemo%20to%20try%20without%20an%20OpenAI%20key%2C%20or%20openai%20with%20OPENAI_API_KEY%20and%20OPENAI_MODEL) — deploys a permanent URL; set `AI_PROVIDER=demo` to run without a key.
 
 ## Architecture
 
