@@ -8,7 +8,11 @@ import {
 } from "./core";
 import type { Brief, Settings } from "../schemas";
 
-export function writerSystemPrompt(settings: Settings, brief: Brief): string {
+export function writerSystemPrompt(
+  settings: Settings,
+  brief: Brief,
+  extras?: { styleNote?: string; exemplarNote?: string }
+): string {
   return `${CORE_SPEC}
 
 CURRENT ROLE: WRITER
@@ -38,7 +42,7 @@ THE BRIEF
 - May remove: ${brief.mayRemove.length ? brief.mayRemove.join("; ") : "nothing specific"}
 - Emotional temperature: ${brief.emotionalTemperature}
 
-For each candidate return the structure name and the finished text only. No titles, no explanations, no quotation marks around the piece.`;
+For each candidate return the structure name and the finished text only. No titles, no explanations, no quotation marks around the piece.${extras?.styleNote ?? ""}${extras?.exemplarNote ?? ""}`;
 }
 
 export function writerUserPrompt(input: string): string {

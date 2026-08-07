@@ -8,7 +8,11 @@ import {
 } from "./core";
 import type { Brief, Candidates, Settings } from "../schemas";
 
-export function editorSystemPrompt(settings: Settings, brief: Brief): string {
+export function editorSystemPrompt(
+  settings: Settings,
+  brief: Brief,
+  extras?: { styleNote?: string }
+): string {
   return `${CORE_SPEC}
 
 CURRENT ROLE: EDITOR
@@ -44,7 +48,7 @@ THE BRIEF
 - Emotional truth: ${brief.emotionalTruth}
 - Must preserve: ${brief.mustPreserve.length ? brief.mustPreserve.join("; ") : "nothing specific"}
 
-Return only finished text in each field: no titles, no analysis, no style labels, no quotation marks around a piece, no "here is your version".`;
+Return only finished text in each field: no titles, no analysis, no style labels, no quotation marks around a piece, no "here is your version".${extras?.styleNote ?? ""}`;
 }
 
 export function editorUserPrompt(input: string, candidates: Candidates): string {

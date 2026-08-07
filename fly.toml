@@ -7,6 +7,14 @@ primary_region = "sin"
 # No AI_PROVIDER set: without OPENAI_API_KEY + OPENAI_MODEL secrets the app
 # runs in clearly-labeled demo mode. To go live with a real model:
 #   fly secrets set OPENAI_API_KEY=... OPENAI_MODEL=...
+# IMPROVE_ADMIN_TOKEN is also a secret (enables /api/admin/*).
+
+[env]
+  IMPROVE_DATA_DIR = "/data"
+
+[[mounts]]
+  source = "improve_data"
+  destination = "/data"
 
 [http_service]
   internal_port = 3000

@@ -82,9 +82,25 @@ EVALS_MODEL_JUDGE=1 npm run evals  # + advisory model-based judging (needs OpenA
 
 Fixtures cover work, startups, crypto, money, relationships, loneliness, technology, AI, politics, social media, family, personal failure, optimism, and bureaucracy in English, Russian, and Ukrainian ([evals/fixtures.json](evals/fixtures.json)). Deterministic checks ([evals/rubric.ts](evals/rubric.ts)): line range per length, empty output, headings, emojis, hashtags, banned AI clichés, excessive length, quotation-wrapping, duplicate alternatives, missing preserved names/numbers. The model judge is advisory only and never treated as ground truth.
 
+## Self-improvement (the learning loop)
+
+The editor can improve its own voice, with guardrails:
+
+1. **Signals** — readers opt in ("Share anonymous ratings…" under a result). Only then do thumbs-up/down and copy events go to `/api/feedback`, carrying the *generated result* and settings — never the original thought, never any identifier.
+2. **Exemplar bank** ([lib/improve/exemplars.ts](lib/improve/exemplars.ts)) — the best-rated recent pieces (per language) are fed to the Writer as rhythm references, marked "never reuse their lines".
+3. **The Coach** ([lib/improve/coach.ts](lib/improve/coach.ts)) — `npm run improve`:
+   - a Critic model distills candidate style rules from loved vs disliked pieces;
+   - rules pass a validator (additive craft notes only; anything override-ish or cliché is rejected);
+   - champion vs candidate generate on eval fixtures; a pairwise judge scores funnier/sharper/more shareable, deterministic checks are a hard floor;
+   - promotion only on a ≥60% win. Each promotion bumps the voice version (`promptVersion` becomes e.g. `satire-v1+s2`), keeps full history, and `npm run improve -- --rollback` reverts.
+
+Learned rules are appended *under* the immutable core spec — they can refine the voice but never weaken safety or honesty rules.
+
+Run it against production: set `IMPROVE_REMOTE_URL` + `IMPROVE_ADMIN_TOKEN` (the deployed app stores feedback on a mounted volume and exposes token-gated `/api/admin/*` endpoints), plus OpenAI env vars locally, then `npm run improve`. In demo mode the command exercises the loop deterministically and never promotes.
+
 ## Privacy
 
-- Writing history, preferences, and thumbs-up/down feedback live only in the browser's localStorage. "Clear history" removes history; nothing is uploaded, ever.
+- Writing history, preferences, and thumbs-up/down feedback live only in the browser's localStorage. "Clear history" removes history; nothing is uploaded unless the user opts in to sharing anonymous ratings (and even then, only the generated result — never the original thought).
 - The server does not log user text by default and never returns stack traces or provider error bodies.
 - Input is capped at 8,000 characters, validated server-side, rate-limited (in-memory, per client), and generation requests carry timeouts and honor client cancellation.
 - Developer-only feedback export: run `zhExportFeedback()` in the browser console to get the locally stored feedback as JSON.

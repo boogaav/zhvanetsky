@@ -24,8 +24,22 @@ import { refineSystemPrompt, refineUserPrompt } from "./prompts/refine";
 import { fastSystemPrompt, fastUserPrompt } from "./prompts/fast";
 import { PROMPT_VERSION } from "./prompts/versions";
 import { safetyResponse } from "./safety";
+import { activeStyle, styleAddendum, taggedPromptVersion } from "../improve/style";
+import { exemplarBlock, selectExemplars } from "../improve/exemplars";
+import type { StyleVersion } from "../improve/types";
 
 export type QualityMode = "quality" | "fast";
+
+export interface PipelineOptions {
+  /** Style override: undefined = active champion, null = no style. */
+  style?: StyleVersion | null;
+  /** Feed reader-approved exemplars to the Writer (default true). */
+  useExemplars?: boolean;
+}
+
+function resolveStyle(options?: PipelineOptions): StyleVersion | null {
+  return options && "style" in options ? (options.style ?? null) : activeStyle();
+}
 
 /**
  * Quality Mode (default): Observer -> Writer -> Editor.
@@ -37,13 +51,18 @@ export async function generate(
   input: string,
   settings: Settings,
   mode: QualityMode,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: PipelineOptions
 ): Promise<GenerationResponse> {
+  const style = resolveStyle(options);
+  const styleNote = styleAddendum(style);
+  const promptVersion = taggedPromptVersion(PROMPT_VERSION, style);
+
   if (mode === "fast") {
     const result = await completeStructured(
       provider,
       {
-        system: fastSystemPrompt(settings),
+        system: fastSystemPrompt(settings, { styleNote }),
         user: fastUserPrompt(input),
         schemaName: "fast_result",
         jsonSchema: editorResultJsonSchema,
@@ -59,7 +78,7 @@ export async function generate(
         mode: a.mode,
         text: a.text.trim(),
       })),
-      promptVersion: PROMPT_VERSION,
+      promptVersion,
       provider: provider.name,
       safety: false,
     };
@@ -86,17 +105,25 @@ export async function generate(
       language: lang,
       result: safetyResponse(lang),
       alternatives: [],
-      promptVersion: PROMPT_VERSION,
+      promptVersion,
       provider: provider.name,
       safety: true,
     };
   }
 
+  const outputLanguage =
+    settings.language !== "auto" ? settings.language : brief.language;
+  const exemplars =
+    options?.useExemplars === false ? [] : selectExemplars(outputLanguage);
+
   // Stage 2: Writer
   const candidates: Candidates = await completeStructured(
     provider,
     {
-      system: writerSystemPrompt(settings, brief),
+      system: writerSystemPrompt(settings, brief, {
+        styleNote,
+        exemplarNote: exemplarBlock(exemplars),
+      }),
       user: writerUserPrompt(input),
       schemaName: "candidates",
       jsonSchema: candidatesJsonSchema,
@@ -110,7 +137,7 @@ export async function generate(
   const edited = await completeStructured(
     provider,
     {
-      system: editorSystemPrompt(settings, brief),
+      system: editorSystemPrompt(settings, brief, { styleNote }),
       user: editorUserPrompt(input, candidates),
       schemaName: "editor_result",
       jsonSchema: editorResultJsonSchema,
@@ -119,18 +146,15 @@ export async function generate(
     editorResultSchema
   );
 
-  const language =
-    settings.language !== "auto" ? settings.language : brief.language;
-
   return {
     id: randomUUID(),
-    language,
+    language: outputLanguage,
     result: edited.primary.trim(),
     alternatives: edited.alternatives.map((a) => ({
       mode: a.mode,
       text: a.text.trim(),
     })),
-    promptVersion: PROMPT_VERSION,
+    promptVersion,
     provider: provider.name,
     safety: false,
   };
@@ -139,12 +163,16 @@ export async function generate(
 export async function refine(
   provider: AIProvider,
   request: RefineRequest,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: PipelineOptions
 ): Promise<RefineResponse> {
+  const style = resolveStyle(options);
   const result = await completeStructured(
     provider,
     {
-      system: refineSystemPrompt(request.mode, request.settings),
+      system: refineSystemPrompt(request.mode, request.settings, {
+        styleNote: styleAddendum(style),
+      }),
       user: refineUserPrompt(request.input, request.previousResult),
       schemaName: "refine_result",
       jsonSchema: refineResultJsonSchema,
@@ -155,7 +183,7 @@ export async function refine(
   return {
     id: randomUUID(),
     result: result.text.trim(),
-    promptVersion: PROMPT_VERSION,
+    promptVersion: taggedPromptVersion(PROMPT_VERSION, style),
     provider: provider.name,
   };
 }

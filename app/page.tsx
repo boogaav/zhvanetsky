@@ -216,6 +216,40 @@ export default function Home() {
     setAnnouncement("Cleared. Write the next thought.");
   }
 
+  /** Fire-and-forget anonymous learning signal; only with opt-in. */
+  function sendLearningSignal(
+    kind: "thumbs_up" | "thumbs_down" | "copied",
+    current: GenerationResponse
+  ) {
+    if (!prefs?.shareFeedback || current.safety) return;
+    fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        kind,
+        result: current.result,
+        language: current.language,
+        tone: settings.tone,
+        length: settings.length,
+        promptVersion: current.promptVersion,
+      }),
+    }).catch(() => {
+      // A lost signal is fine; never bother the user about it.
+    });
+  }
+
+  function toggleShareFeedback(value: boolean) {
+    if (!prefs) return;
+    const next = { ...prefs, shareFeedback: value };
+    setPrefs(next);
+    savePrefs(next);
+    setAnnouncement(
+      value
+        ? "Anonymous ratings will be shared to improve the editor."
+        : "Sharing disabled. Ratings stay on this device."
+    );
+  }
+
   function giveFeedback(value: "up" | "down") {
     if (!result) return;
     setFeedback(value);
@@ -226,6 +260,7 @@ export default function Home() {
       value,
       createdAt: Date.now(),
     });
+    sendLearningSignal(value === "up" ? "thumbs_up" : "thumbs_down", result);
     setAnnouncement(value === "up" ? "Noted: it landed." : "Noted: it missed.");
   }
 
@@ -368,9 +403,14 @@ export default function Home() {
             text={result.result}
             safety={result.safety}
             provider={result.provider}
-            onCopied={() => setAnnouncement("Copied to clipboard.")}
+            onCopied={() => {
+              setAnnouncement("Copied to clipboard.");
+              sendLearningSignal("copied", result);
+            }}
             feedback={feedback}
             onFeedback={giveFeedback}
+            shareFeedback={prefs?.shareFeedback ?? false}
+            onToggleShare={toggleShareFeedback}
           />
           {!result.safety && (
             <>

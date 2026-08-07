@@ -36,6 +36,7 @@ describe("local preference serialization", () => {
     const prefs: Prefs = {
       settings: { ...DEFAULT_SETTINGS, tone: "brutal", language: "uk" },
       refineCounts: { shorter: 3 },
+      shareFeedback: true,
     };
     savePrefs(prefs);
     const loaded = loadPrefs();

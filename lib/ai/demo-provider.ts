@@ -309,6 +309,19 @@ export class DemoProvider implements AIProvider {
         const mode = requestedRefineMode(params.system);
         return { text: refineDemo(input, previous, mode, lang, len) };
       }
+      // Self-improvement stubs: deterministic, and the judge always
+      // keeps the champion so demo mode can never "learn" by accident.
+      case "style_rules": {
+        return {
+          rules: [
+            "End on the line that quietly reverses the first line.",
+            "Prefer one concrete household detail over any abstraction.",
+          ],
+        };
+      }
+      case "pairwise_verdict": {
+        return { winner: "B", reason: "Demo judge: the champion holds." };
+      }
       default:
         throw new Error(`DemoProvider: unknown schema ${params.schemaName}`);
     }

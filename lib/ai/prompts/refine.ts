@@ -35,7 +35,11 @@ Keep the same central thought.`,
 - Do not paraphrase the previous result; write a genuinely new piece`,
 };
 
-export function refineSystemPrompt(mode: RefineMode, settings: Settings): string {
+export function refineSystemPrompt(
+  mode: RefineMode,
+  settings: Settings,
+  extras?: { styleNote?: string }
+): string {
   return `${CORE_SPEC}
 
 CURRENT ROLE: REVISING EDITOR
@@ -50,7 +54,7 @@ ${lengthNote(settings.length)}
 ${languageNote(settings)}
 ${preserveNote(settings)}
 
-Return only the finished revised text: no titles, no explanations, no quotation marks around the piece.`;
+Return only the finished revised text: no titles, no explanations, no quotation marks around the piece.${extras?.styleNote ?? ""}`;
 }
 
 export function refineUserPrompt(input: string, previousResult: string): string {

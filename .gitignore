@@ -38,6 +38,9 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 
+# self-improvement local store (feedback events + learned style)
+/.improve-data/
+
 # vercel
 .vercel
 

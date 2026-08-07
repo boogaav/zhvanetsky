@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "evals": "tsx evals/run-evals.ts"
+    "evals": "tsx evals/run-evals.ts",
+    "improve": "tsx lib/improve/run.ts"
   },
   "dependencies": {
     "next": "16.2.10",

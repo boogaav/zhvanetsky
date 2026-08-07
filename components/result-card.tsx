@@ -9,6 +9,8 @@ interface Props {
   onCopied: () => void;
   feedback: "up" | "down" | null;
   onFeedback: (value: "up" | "down") => void;
+  shareFeedback: boolean;
+  onToggleShare: (value: boolean) => void;
 }
 
 export default function ResultCard({
@@ -18,6 +20,8 @@ export default function ResultCard({
   onCopied,
   feedback,
   onFeedback,
+  shareFeedback,
+  onToggleShare,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,6 +111,19 @@ export default function ResultCard({
           </div>
         )}
       </div>
+
+      {!safety && (
+        <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs text-ink-faint">
+          <input
+            type="checkbox"
+            checked={shareFeedback}
+            onChange={(e) => onToggleShare(e.target.checked)}
+            className="h-3.5 w-3.5 accent-accent"
+          />
+          Share anonymous ratings to help the editor learn (result text only,
+          never your original thought)
+        </label>
+      )}
 
       {provider === "demo" && (
         <p className="mt-3 text-xs text-ink-faint">

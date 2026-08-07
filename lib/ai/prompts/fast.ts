@@ -12,7 +12,10 @@ import type { Settings } from "../schemas";
  * Fast Mode: one model call produces the primary result and both
  * alternatives. Kept behind AI_QUALITY_MODE=fast; Quality Mode is default.
  */
-export function fastSystemPrompt(settings: Settings): string {
+export function fastSystemPrompt(
+  settings: Settings,
+  extras?: { styleNote?: string }
+): string {
   return `${CORE_SPEC}
 
 CURRENT ROLE: SOLE EDITOR (FAST MODE)
@@ -26,7 +29,7 @@ ${lengthNote(settings.length)}
 ${languageNote(settings)}
 ${preserveNote(settings)}
 
-Return only finished text in each field: no titles, no analysis, no quotation marks around a piece.`;
+Return only finished text in each field: no titles, no analysis, no quotation marks around a piece.${extras?.styleNote ?? ""}`;
 }
 
 export function fastUserPrompt(input: string): string {

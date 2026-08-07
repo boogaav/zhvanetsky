@@ -25,6 +25,9 @@ export interface Prefs {
   settings: Settings;
   /** Counts per refinement mode, to surface the most-used one. */
   refineCounts: Partial<Record<RefineMode, number>>;
+  /** Opt-in: send anonymous ratings/copies so the editor can learn.
+   *  Off by default; nothing leaves the browser until enabled. */
+  shareFeedback: boolean;
 }
 
 export interface FeedbackEntry {
@@ -81,12 +84,17 @@ export function clearHistory(): void {
 /* ---------------- preferences ---------------- */
 
 export function loadPrefs(): Prefs {
-  const fallback: Prefs = { settings: DEFAULT_SETTINGS, refineCounts: {} };
+  const fallback: Prefs = {
+    settings: DEFAULT_SETTINGS,
+    refineCounts: {},
+    shareFeedback: false,
+  };
   if (!available()) return fallback;
   const prefs = safeParse<Prefs>(window.localStorage.getItem(PREFS_KEY), fallback);
   return {
     settings: { ...DEFAULT_SETTINGS, ...(prefs.settings ?? {}) },
     refineCounts: prefs.refineCounts ?? {},
+    shareFeedback: prefs.shareFeedback === true,
   };
 }
 

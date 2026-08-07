@@ -118,6 +118,32 @@ test("empty input cannot be submitted", async ({ page }) => {
   ).toBeDisabled();
 });
 
+test("opt-in feedback sends an anonymous learning signal", async ({ page }) => {
+  await page.goto("/");
+  await generate(page);
+  // Off by default: rating must NOT call the API.
+  let called = 0;
+  await page.route("**/api/feedback", (route) => {
+    called++;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ accepted: true }),
+    });
+  });
+  await page.getByRole("button", { name: "Good result" }).click();
+  expect(called).toBe(0);
+  // Opt in, rate again: exactly one signal, carrying only the result.
+  await page.getByText(/Share anonymous ratings/).click();
+  const requestPromise = page.waitForRequest("**/api/feedback");
+  await page.getByRole("button", { name: "Bad result" }).click();
+  const request = await requestPromise;
+  const payload = request.postDataJSON() as Record<string, unknown>;
+  expect(payload.kind).toBe("thumbs_down");
+  expect(String(payload.result).length).toBeGreaterThan(0);
+  expect(payload).not.toHaveProperty("input");
+});
+
 test("layout has no horizontal scrolling", async ({ page }) => {
   await page.goto("/");
   await generate(page);
