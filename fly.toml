@@ -1,0 +1,20 @@
+app = "zhvanetsky"
+primary_region = "sin"
+
+[build]
+  dockerfile = "Dockerfile"
+
+# No AI_PROVIDER set: without OPENAI_API_KEY + OPENAI_MODEL secrets the app
+# runs in clearly-labeled demo mode. To go live with a real model:
+#   fly secrets set OPENAI_API_KEY=... OPENAI_MODEL=...
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
