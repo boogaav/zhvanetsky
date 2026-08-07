@@ -7,6 +7,8 @@ An independent AI satirical editor. You give it a messy, emotional, unnecessaril
 
 The product name is centralized in [lib/config.ts](lib/config.ts) (`APP_NAME`, overridable via `NEXT_PUBLIC_APP_NAME`) so it can be renamed before public launch in one place.
 
+**Live at [zhvanetsky.booga.me](https://zhvanetsky.booga.me)** (Fly.io, demo mode until model secrets are set).
+
 ## Try it in one click
 
 - **GitHub Codespaces**: [open a codespace](https://codespaces.new/boogaav/zhvanetsky?quickstart=1) — it installs dependencies and starts the app on port 5195 automatically (demo mode, no API key needed).
