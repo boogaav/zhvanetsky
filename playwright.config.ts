@@ -22,7 +22,11 @@ export default defineConfig({
     command: "npx next build && npx next start -p 5199",
     url: "http://localhost:5199",
     reuseExistingServer: !process.env.CI,
-    env: { AI_PROVIDER: "demo", RATE_LIMIT_MAX: "100000" },
+    env: {
+      AI_PROVIDER: "demo",
+      RATE_LIMIT_MAX: "100000",
+      IMPROVE_DATA_DIR: "test-results/e2e-data",
+    },
     timeout: 240_000,
   },
 });

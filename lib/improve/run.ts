@@ -14,9 +14,10 @@
 import fixturesJson from "../../evals/fixtures.json";
 import { getProvider } from "../ai";
 import { runCoach, type CoachFixture } from "./coach";
+import { learningEvents } from "./wall";
 import {
   promoteStyle,
-  readFeedback,
+
   readStyleState,
   rollbackStyle,
 } from "./store";
@@ -101,7 +102,7 @@ async function main() {
   const provider = getProvider();
   const events: FeedbackEvent[] = useRemote
     ? (await remoteGet<{ events: FeedbackEvent[] }>("/api/admin/feedback")).events
-    : readFeedback();
+    : learningEvents();
   const styleState: StyleState = useRemote
     ? await remoteGet<StyleState>("/api/admin/style")
     : readStyleState();

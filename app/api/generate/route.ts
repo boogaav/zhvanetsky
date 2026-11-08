@@ -8,6 +8,7 @@ import {
   mapErrorToResponse,
 } from "@/lib/validation/errors";
 import { GENERATE_TIMEOUT_MS, MAX_INPUT_LENGTH } from "@/lib/config";
+import { signText } from "@/lib/improve/wall";
 
 export const runtime = "nodejs";
 
@@ -56,7 +57,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       getQualityMode(),
       signal
     );
-    return NextResponse.json(response);
+    if (response.safety) return NextResponse.json(response);
+    return NextResponse.json({
+      ...response,
+      signature: signText(response.result),
+      alternatives: response.alternatives.map((a) => ({
+        ...a,
+        signature: signText(a.text),
+      })),
+    });
   } catch (err) {
     return mapErrorToResponse(err);
   }

@@ -9,3 +9,5 @@ README.md
 tests
 .devcontainer
 .improve-data
+test-results
+playwright-report

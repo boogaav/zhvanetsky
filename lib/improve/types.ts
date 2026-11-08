@@ -10,7 +10,13 @@ import { z } from "zod";
  * can be rolled back.
  */
 
-export const FEEDBACK_KINDS = ["thumbs_up", "thumbs_down", "copied"] as const;
+export const FEEDBACK_KINDS = [
+  "thumbs_up",
+  "thumbs_down",
+  "copied",
+  // won a "which is funnier?" duel against the user's other versions
+  "preferred",
+] as const;
 export type FeedbackKind = (typeof FEEDBACK_KINDS)[number];
 
 export const feedbackEventSchema = z.object({

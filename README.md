@@ -94,6 +94,13 @@ The editor can improve its own voice, with guardrails:
    - champion vs candidate generate on eval fixtures; a pairwise judge scores funnier/sharper/more shareable, deterministic checks are a hard floor;
    - promotion only on a ≥60% win. Each promotion bumps the voice version (`promptVersion` becomes e.g. `satire-v1+s2`), keeps full history, and `npm run improve -- --rollback` reverts.
 
+### Pairwise signals: "Which is funnier?" and the Wall
+
+- **Own-thought duels** — under a result, *Which is funnier?* runs a round-robin of your versions (primary + sharper + stranger, 3 duels); the winner becomes the main result. With rating-sharing on, each pick sends a `preferred` event.
+- **The Wall** (`/wall`) — anyone can publish a result with one click (only that text, anonymously; never the original thought). Visitors judge pieces two at a time; each piece carries an Elo rating and a public leaderboard ranks them. Only text this server generated can be published: generate/refine responses carry an HMAC signature per text (`WALL_SECRET`, falling back to `IMPROVE_ADMIN_TOKEN`), verified on publish.
+- Pieces with ≥5 duels that sit ≥40 Elo above/below baseline flow into the learning loop as up/down signals (exemplars + the Coach).
+- Moderation: `GET /api/admin/wall` lists pieces with ratings; `DELETE /api/admin/wall?id=<id>` removes one (Bearer `IMPROVE_ADMIN_TOKEN`).
+
 Learned rules are appended *under* the immutable core spec — they can refine the voice but never weaken safety or honesty rules.
 
 Run it against production: set `IMPROVE_REMOTE_URL` + `IMPROVE_ADMIN_TOKEN` (the deployed app stores feedback on a mounted volume and exposes token-gated `/api/admin/*` endpoints), plus OpenAI env vars locally, then `npm run improve`. In demo mode the command exercises the loop deterministically and never promotes.

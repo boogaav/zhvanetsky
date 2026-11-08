@@ -15,9 +15,11 @@ export interface HistoryEntry {
   id: string;
   input: string;
   result: string;
-  alternatives: { mode: string; text: string }[];
+  alternatives: { mode: string; text: string; signature?: string }[];
   settings: Settings;
   provider: string;
+  /** Wall publish token for `result`; absent on entries saved before the Wall. */
+  signature?: string;
   createdAt: number;
 }
 

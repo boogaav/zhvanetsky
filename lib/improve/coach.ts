@@ -71,7 +71,7 @@ export async function proposeRules(
   currentRules: string[]
 ): Promise<string[]> {
   const winners = events
-    .filter((e) => e.kind === "thumbs_up" || e.kind === "copied")
+    .filter((e) => e.kind !== "thumbs_down")
     .slice(-20);
   const losers = events.filter((e) => e.kind === "thumbs_down").slice(-10);
 

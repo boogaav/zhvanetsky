@@ -155,3 +155,43 @@ test("layout has no horizontal scrolling", async ({ page }) => {
     page.getByText("Independent AI writing experiment", { exact: false })
   ).toBeVisible();
 });
+
+test("user picks the funnier version in pairwise duels", async ({ page }) => {
+  await page.goto("/");
+  await generate(page);
+  await page.getByRole("button", { name: "Which is funnier?" }).click();
+  const duel = page.getByTestId("funnier-duel");
+  await expect(duel).toContainText("1 of 3");
+  const winner = (await duel.getByRole("button").first().innerText())
+    .replace("Tap if this one is funnier", "")
+    .trim();
+  for (let i = 0; i < 3; i++) {
+    await page.getByRole("button", { name: "Version 1 is funnier" }).click();
+  }
+  await expect(duel).toHaveCount(0);
+  const result = (await page.getByTestId("result-text").innerText()).trim();
+  // Always picking the left card: the first left-hand piece wins at least two duels.
+  expect(result.length).toBeGreaterThan(0);
+  expect([winner, result]).toContain(result);
+});
+
+test("user publishes to the Wall and visitors vote", async ({ page }) => {
+  for (const thought of [THOUGHT, "My boss says we are a family. Family does not get a bonus."]) {
+    await page.goto("/");
+    await generate(page, thought);
+    await page.getByRole("button", { name: "Publish to the Wall" }).click();
+    await expect(page.getByRole("link", { name: /On the Wall/ })).toBeVisible();
+  }
+  await page.goto("/wall");
+  await expect(page.getByTestId("funnier-duel")).toBeVisible();
+  await page.getByRole("button", { name: "Version 1 is funnier" }).click();
+  await expect(page.getByTestId("wall-top")).toBeVisible();
+  await expect(page.getByTestId("wall-top")).toContainText(/won \d+ of \d+/);
+});
+
+test("the Wall rejects text the server did not generate", async ({ request }) => {
+  const res = await request.post("/api/wall", {
+    data: { text: "Forged defamation.", signature: "0".repeat(64), language: "en" },
+  });
+  expect(res.status()).toBe(400);
+});

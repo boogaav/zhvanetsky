@@ -7,6 +7,8 @@ import ResultCard from "@/components/result-card";
 import RefinementActions from "@/components/refinement-actions";
 import AlternativeResults from "@/components/alternative-results";
 import HistoryDrawer from "@/components/history-drawer";
+import FunnierDuel from "@/components/funnier-duel";
+import Link from "next/link";
 import { APP_NAME, APP_SUBTAGLINE, APP_TAGLINE } from "@/lib/config";
 import type {
   GenerationResponse,
@@ -55,6 +57,13 @@ export default function Home() {
   const [announcement, setAnnouncement] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+  const [duel, setDuel] = useState<{
+    versions: { text: string; signature?: string }[];
+    pairs: [number, number][];
+    step: number;
+    wins: number[];
+  } | null>(null);
+  const [publishedText, setPublishedText] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
   const stageTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -118,6 +127,7 @@ export default function Home() {
     }
     setError(null);
     setFeedback(null);
+    setDuel(null);
     setLoading(true);
     startStages();
     const controller = new AbortController();
@@ -147,6 +157,7 @@ export default function Home() {
             alternatives: data.alternatives,
             settings,
             provider: data.provider,
+            signature: data.signature,
             createdAt: Date.now(),
           })
         );
@@ -193,7 +204,7 @@ export default function Home() {
         setAnnouncement(data.message ?? "Refinement failed.");
         return;
       }
-      setResult({ ...result, result: data.result });
+      setResult({ ...result, result: data.result, signature: data.signature });
       setFeedback(null);
       setAnnouncement("The result is ready.");
       if (prefs) setPrefs(bumpRefineCount(prefs, mode));
@@ -212,13 +223,14 @@ export default function Home() {
     setResult(null);
     setError(null);
     setFeedback(null);
+    setDuel(null);
     setGeneratedFor("");
     setAnnouncement("Cleared. Write the next thought.");
   }
 
   /** Fire-and-forget anonymous learning signal; only with opt-in. */
   function sendLearningSignal(
-    kind: "thumbs_up" | "thumbs_down" | "copied",
+    kind: "thumbs_up" | "thumbs_down" | "copied" | "preferred",
     current: GenerationResponse
   ) {
     if (!prefs?.shareFeedback || current.safety) return;
@@ -276,9 +288,71 @@ export default function Home() {
       promptVersion: PROMPT_VERSION,
       provider: entry.provider,
       safety: false,
+      signature: entry.signature,
     });
     setFeedback(null);
     setError(null);
+  }
+
+  /** Every version on screen with its publish signature. */
+  function versions(current: GenerationResponse) {
+    const all = [
+      { text: current.result, signature: current.signature },
+      ...current.alternatives.map((a) => ({ text: a.text, signature: a.signature })),
+    ];
+    return all.filter((v, i) => all.findIndex((x) => x.text === v.text) === i);
+  }
+
+  function promote(current: GenerationResponse, text: string) {
+    const signature = versions(current).find((v) => v.text === text)?.signature;
+    setResult({ ...current, result: text, signature });
+    setFeedback(null);
+  }
+
+  function startDuel() {
+    if (!result) return;
+    const vs = versions(result);
+    const pairs: [number, number][] = [];
+    for (let i = 0; i < vs.length; i++)
+      for (let j = i + 1; j < vs.length; j++) pairs.push([i, j]);
+    setDuel({ versions: vs, pairs, step: 0, wins: vs.map(() => 0) });
+    setAnnouncement("Pick the funnier of two versions.");
+  }
+
+  function pickInDuel(side: "a" | "b") {
+    if (!duel || !result) return;
+    const [i, j] = duel.pairs[duel.step];
+    const winner = side === "a" ? i : j;
+    const wins = duel.wins.map((w, k) => (k === winner ? w + 1 : w));
+    sendLearningSignal("preferred", { ...result, result: duel.versions[winner].text });
+    if (duel.step + 1 < duel.pairs.length) {
+      setDuel({ ...duel, step: duel.step + 1, wins });
+      return;
+    }
+    const best = wins.indexOf(Math.max(...wins));
+    promote(result, duel.versions[best].text);
+    setDuel(null);
+    setAnnouncement("Your favourite is now the main result.");
+  }
+
+  async function publish() {
+    if (!result?.signature) return;
+    try {
+      const res = await fetch("/api/wall", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: result.result,
+          signature: result.signature,
+          language: result.language,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setPublishedText(result.result);
+      setAnnouncement("Published to the Wall.");
+    } catch {
+      setError("The Wall didn't take it. Try once more.");
+    }
   }
 
   function handleClearHistory() {
@@ -304,6 +378,12 @@ export default function Home() {
           {APP_TAGLINE}
         </h1>
         <p className="mt-3 text-lg text-ink-soft">{APP_SUBTAGLINE}</p>
+        <Link
+          href="/wall"
+          className="mt-4 inline-block text-sm text-accent underline-offset-4 hover:underline"
+        >
+          The Wall — vote on what other people wrote →
+        </Link>
       </header>
 
       <section aria-label="Your thought">
@@ -420,11 +500,53 @@ export default function Home() {
                 disabled={busy}
                 favorite={prefs ? favoriteRefineMode(prefs) : null}
               />
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {result.alternatives.length > 0 && !duel && (
+                  <button
+                    type="button"
+                    onClick={startDuel}
+                    disabled={busy}
+                    className="rounded-sm border border-accent px-3 py-1.5 text-sm text-accent transition-colors hover:bg-accent hover:text-paper disabled:opacity-50"
+                  >
+                    Which is funnier?
+                  </button>
+                )}
+                {result.signature &&
+                  (publishedText === result.result ? (
+                    <Link href="/wall" className="text-sm text-accent hover:underline">
+                      On the Wall ✓ — see it
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={publish}
+                      disabled={busy}
+                      className="rounded-sm border border-line px-3 py-1.5 text-sm text-ink-soft transition-colors hover:border-ink-faint hover:text-ink disabled:opacity-50"
+                    >
+                      Publish to the Wall
+                    </button>
+                  ))}
+              </div>
+              {result.signature && publishedText !== result.result && (
+                <p className="mt-1.5 text-xs text-ink-faint">
+                  Publishing posts only this text, anonymously. Your original
+                  thought is never published.
+                </p>
+              )}
+              {duel && (
+                <div className="mt-6">
+                  <FunnierDuel
+                    a={duel.versions[duel.pairs[duel.step][0]].text}
+                    b={duel.versions[duel.pairs[duel.step][1]].text}
+                    onPick={pickInDuel}
+                    caption={`${duel.step + 1} of ${duel.pairs.length}`}
+                  />
+                </div>
+              )}
               <AlternativeResults
                 alternatives={result.alternatives}
                 onPromote={(text) => {
-                  setResult({ ...result, result: text });
-                  setFeedback(null);
+                  promote(result, text);
                   setAnnouncement("Alternative promoted to the main result.");
                 }}
               />

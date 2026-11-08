@@ -1,4 +1,4 @@
-import { readFeedback } from "./store";
+import { learningEvents } from "./wall";
 import type { FeedbackEvent } from "./types";
 
 /**
@@ -17,7 +17,7 @@ export function selectExemplars(
   language: string,
   events?: FeedbackEvent[]
 ): string[] {
-  const all = (events ?? readFeedback()).slice(-RECENT_WINDOW);
+  const all = (events ?? learningEvents()).slice(-RECENT_WINDOW);
   const downvoted = new Set(
     all.filter((e) => e.kind === "thumbs_down").map((e) => e.result)
   );

@@ -5,6 +5,7 @@ import { getProvider } from "@/lib/ai";
 import { checkRateLimit, clientKey } from "@/lib/rate-limit";
 import { errorResponse, mapErrorToResponse } from "@/lib/validation/errors";
 import { MAX_INPUT_LENGTH, REFINE_TIMEOUT_MS } from "@/lib/config";
+import { signText } from "@/lib/improve/wall";
 
 export const runtime = "nodejs";
 
@@ -42,7 +43,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   try {
     const response = await refine(getProvider(), parsed.data, signal);
-    return NextResponse.json(response);
+    return NextResponse.json({ ...response, signature: signText(response.result) });
   } catch (err) {
     return mapErrorToResponse(err);
   }

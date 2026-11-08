@@ -199,6 +199,8 @@ export const generationResponseSchema = z.object({
     z.object({
       mode: z.enum(["sharper", "stranger"]),
       text: z.string(),
+      /** Wall publish token: HMAC of the text, set by the API route. */
+      signature: z.string().optional(),
     })
   ),
   promptVersion: z.string(),
@@ -206,6 +208,7 @@ export const generationResponseSchema = z.object({
   /** True when the input was a credible crisis disclosure and the
    *  comedy pipeline was intentionally skipped. */
   safety: z.boolean(),
+  signature: z.string().optional(),
 });
 export type GenerationResponse = z.infer<typeof generationResponseSchema>;
 
@@ -214,5 +217,6 @@ export const refineResponseSchema = z.object({
   result: z.string(),
   promptVersion: z.string(),
   provider: z.string(),
+  signature: z.string().optional(),
 });
 export type RefineResponse = z.infer<typeof refineResponseSchema>;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readFeedback } from "@/lib/improve/store";
+import { learningEvents } from "@/lib/improve/wall";
 import { isAuthorized } from "../route-helpers";
 
 export const runtime = "nodejs";
@@ -9,5 +9,5 @@ export async function GET(request: Request): Promise<NextResponse> {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
-  return NextResponse.json({ events: readFeedback() });
+  return NextResponse.json({ events: learningEvents() });
 }
